@@ -1,15 +1,27 @@
 package trainapplogos;
 
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ApplicationFibonacciExecutors {
-	public static void main(String[] args) throws InterruptedException {
-		ExecutorService executable = Executors.newSingleThreadExecutor();
-		executable.execute(new MyThreadEx());
-		executable.execute(new RunnableThreadEx());
+	public static void main(String[] args) throws InterruptedException, ExecutionException {
+		ExecutorService executable = Executors.newFixedThreadPool(1);
+		Future<?> task = executable.submit(new MyThreadEx());
+		
+		while(!task.isDone())
+		{
+		 Thread.sleep(1);
+		}
+		
+		task.get();
 		executable.shutdown();
+		
+		ExecutorService executable2 = Executors.newSingleThreadExecutor();
+		executable2.execute(new RunnableThreadEx());
+		executable2.shutdown();
 	}
 	
 	static int[] calculateFibonacci(int count) { 
@@ -31,7 +43,7 @@ public class ApplicationFibonacciExecutors {
 
 class MyThreadEx extends Thread {
 	@Override
-	public void run() {
+	public synchronized void run() {
 		System.out.println("> [MyThread]: Enter number of Fibonachi's numbers:");
 		Scanner sc = new Scanner(System.in);
 		int arr[] = ApplicationFibonacciExecutors.calculateFibonacci(sc.nextInt());
@@ -49,9 +61,9 @@ class MyThreadEx extends Thread {
 	}
 }
 
-class  RunnableThreadEx implements Runnable {
+class RunnableThreadEx implements Runnable {
 	@Override
-	public void run() {
+	public synchronized void run() {
 		System.out.println("\n> [RunnableThread]: Enter number of Fibonachi's numbers:");
 		Scanner sc = new Scanner(System.in);
 		int arr[] = ApplicationFibonacciExecutors.calculateFibonacci(sc.nextInt());
